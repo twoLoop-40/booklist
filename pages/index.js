@@ -1,23 +1,26 @@
 import Categories from "../components/Categories";
 import Seo from "../components/Seo";
-import { apiForList, asyncPipe, fetcher } from "../utils";
+import { useQuery, QueryClient, dehydrate } from "@tanstack/react-query";
+import { apiForList, fetcher } from "../utils";
 
-export default function Home({ categoryList }) {
+export default function Home() {
+  const { data } = useQuery([apiForList()], () => fetcher(apiForList()));
+
   return (
     <div>
       <Seo title="Home" />
-      <Categories categoryList={categoryList} />
+      <Categories categoryList={data} />
     </div>
   );
 }
 
 export async function getServerSideProps() {
-  const listFetcher = asyncPipe(apiForList, fetcher);
-  const results = await listFetcher();
+  const queryClient = new QueryClient();
+  await queryClient.prefetchQuery([apiForList()], () => fetcher(apiForList()));
 
   return {
     props: {
-      categoryList: results
+      dehydratedState: dehydrate(queryClient)
     }
   };
 }
